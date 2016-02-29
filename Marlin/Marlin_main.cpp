@@ -474,6 +474,12 @@ bool z_probe_activation=true;
 bool home_Z_reverse=false;
 
 bool x_axis_endstop_sel=false;
+bool monitor_secure_endstop=true;
+
+bool min_x_endstop_triggered=false;
+bool max_x_endstop_triggered=false;
+bool min_y_endstop_triggered=false;
+bool max_y_endstop_triggered=false;
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -489,8 +495,8 @@ bool head_placed=false;
 unsigned long i2c_pre_millis=0;
 bool i2c_timeout=false;
 
-bool zeroed_far_from_home_x=true;
-bool zeroed_far_from_home_y=true;
+bool zeroed_far_from_home_x=false;
+bool zeroed_far_from_home_y=false;
 
 float safe_probing_offset=1;        //it will probe until the (probe length - safe_probing_offset) is reached
 
@@ -644,7 +650,7 @@ void servo_init()
 
 void FabtotumIO_init()
 {
-BEEP_ON()
+BEEP_ON();
 
 pinMode(RED_PIN,OUTPUT);
 pinMode(GREEN_PIN,OUTPUT);
@@ -734,11 +740,12 @@ Read_Head_Info();
 
 
 _delay_ms(50);
-BEEP_OFF()
+BEEP_OFF();
 _delay_ms(30);
-BEEP_ON()
+BEEP_ON();
 _delay_ms(50);
-BEEP_OFF()
+BEEP_OFF();
+
 
 
 
@@ -807,6 +814,28 @@ void setup()
   #ifdef DIGIPOT_I2C
     digipot_i2c_init();
   #endif
+  
+  //initialize smart endstop check
+    if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
+  {
+    min_x_endstop_triggered=true;
+  }
+      
+  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING))
+  {
+    max_x_endstop_triggered=true;
+  }
+
+  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
+  {
+    min_y_endstop_triggered=true;
+  }
+  
+  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING))      
+  {
+    max_y_endstop_triggered=true;
+  }
+  
 }
 
 
@@ -1648,7 +1677,16 @@ void process_commands()
         previous_millis_cmd = millis();
   
         enable_endstops(true);
-  
+         
+        if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
+         //Z movement move to 50 if g27 just happened.
+         destination[Z_AXIS] = 20;    // move up
+         feedrate = max_feedrate[Z_AXIS];
+         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+         st_synchronize();
+         }
+
+         
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
         }
@@ -1756,7 +1794,9 @@ void process_commands()
           #ifndef Z_SAFE_HOMING
             if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
               #if defined (Z_RAISE_BEFORE_HOMING) && (Z_RAISE_BEFORE_HOMING > 0)
+                              
                 destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+        
                 feedrate = max_feedrate[Z_AXIS];
                 plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
                 st_synchronize();
@@ -3081,32 +3121,19 @@ void process_commands()
     #if (LARGE_FLASH == true && ( BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)))
     case 300: // M300
     {
-//      int beepS = code_seen('S') ? code_value() : 110;
-//      int beepP = code_seen('P') ? code_value() : 1000;
-//      if (beepS > 0)
-//      {
-//        #if BEEPER > 0
-//          tone(BEEPER, beepS);
-//          delay(beepP);
-//          noTone(BEEPER);
-//        #elif defined(ULTRALCD)
-//		  lcd_buzz(beepS, beepP);
-//		#elif defined(LCD_USE_I2C_BUZZER)
-//		  lcd_buzz(beepP, beepS);
-//        #endif
-//      }
-//      else
-//      {
-//        delay(beepP);
-//      }
 
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
-        _delay_ms(50);
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
+      BEEP_ON()
+      _delay_ms(50);
+      BEEP_OFF()
+      _delay_ms(50);
+      BEEP_ON()
+      _delay_ms(50);
+      BEEP_OFF()
+      _delay_ms(50);
+      BEEP_ON()
+      _delay_ms(50);
+      BEEP_OFF()
+
     }
     break;
     #endif // M300
@@ -3754,24 +3781,38 @@ void process_commands()
 
     case 728:// M728 - RASPI ALIVE
     {
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      
+      //Stopped = false;
       set_amb_color(255,255,255);
       store_last_amb_color();
       stop_fading();
       restore_last_amb_color();
+      /*
+      //intro tune
+      analogWrite(BEEPER, 180);
+
+      delay(50);      
+      BEEP_OFF();
+      delay(50);
+
+      analogWrite(BEEPER, 185);
+
+      delay(50);
+      BEEP_OFF();
+      delay(50);
+
+      analogWrite(BEEPER, 190);
+
+      delay(50);
+      BEEP_OFF();
+      delay(80);
       
+      analogWrite(BEEPER, 105);
       
+      delay(100);
+      BEEP_OFF();
+      delay(100);
+      */
+
     }
     break;
     
@@ -3790,6 +3831,31 @@ void process_commands()
       disable_e1();
       disable_e2();
       
+      //outro tune
+      analogWrite(BEEPER, 105);
+
+      delay(500);      
+      BEEP_OFF();
+      delay(150);
+
+      analogWrite(BEEPER, 130);
+
+      delay(50);
+      BEEP_OFF();
+      delay(80);
+
+      analogWrite(BEEPER, 150);
+
+      delay(50);
+      BEEP_OFF();
+      delay(60);
+      
+      analogWrite(BEEPER, 180);
+      
+      delay(100);
+      BEEP_OFF();
+      delay(100);
+      
       
       set_amb_color(0,0,0);
       store_last_amb_color();
@@ -3797,14 +3863,12 @@ void process_commands()
       //_delay_ms(45000);
       //restore_last_amb_color();
        //while(1){}
-      
     }
     break;
     
     case 730:   // M730 - READ LAST ERROR CODE
     {
-      
-      //RPI_ERROR_ACK_OFF();
+      RPI_ERROR_ACK_OFF();
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
@@ -3850,6 +3914,30 @@ void process_commands()
       }
       triggered_kill=false;
       Stopped = false;
+    }
+    break;              
+    
+    case 734: // monitor warning settings (endstops)
+    {
+      //1 enable
+      //0 disable
+      int value;
+      if (code_seen('S')){
+        value = code_value();
+        if (value==1)
+        {
+          monitor_secure_endstop=true; 
+          min_x_endstop_triggered=false;
+          max_x_endstop_triggered=false;
+          min_y_endstop_triggered=false;
+          max_y_endstop_triggered=false;
+        }
+        
+        if (value==0){
+        monitor_secure_endstop=false; 
+        
+        }
+      }
     }
     break;
     
@@ -4278,9 +4366,16 @@ void process_commands()
 
     case 756 :  // M756 - ERROR GENERATOR
       {
-      RPI_ERROR_ACK_ON();
-      ERROR_CODE=9999999;  
-     
+       
+      ERROR_CODE=0;
+      int value;
+      if (code_seen('E'))
+      {
+        value = code_value();
+        ERROR_CODE=int(555);
+      }
+      
+      RPI_ERROR_ACK_ON();    
 
       }
       break;
@@ -4739,7 +4834,7 @@ void get_arc_coordinates()
 
 void clamp_to_software_endstops(float target[3])
 {
-  if (min_software_endstops) {
+   if (min_software_endstops) {
     if (target[X_AXIS] < min_pos[X_AXIS]) target[X_AXIS] = min_pos[X_AXIS];
     if (target[Y_AXIS] < min_pos[Y_AXIS]) target[Y_AXIS] = min_pos[Y_AXIS];
     if (target[Z_AXIS] < min_pos[Z_AXIS]) target[Z_AXIS] = min_pos[Z_AXIS];
@@ -5073,7 +5168,7 @@ void manage_inactivity()
 
  if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
-     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
+     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
     }
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
@@ -5083,14 +5178,14 @@ void manage_inactivity()
  //   stop_fading();
  //   set_amb_color(0,0,255);
  //    }
- else
-     {
-       if(rpi_recovery_flag)
-       {
-       RPI_RECOVERY_OFF();
-       rpi_recovery_flag=false;
-       }
-     }
+ //else
+ //   {
+ //      if(rpi_recovery_flag)
+ //      {
+ //      RPI_RECOVERY_OFF();
+ //      rpi_recovery_flag=false;
+ //      }
+ //    }
 
  if ((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && (READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
     { // the user pressed both Y-Endstops at the same time (or a hardware switch that enables them at the same time)
@@ -5117,40 +5212,56 @@ void manage_inactivity()
 
 }
 
+
 void manage_secure_endstop()
 {
-  
-  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    zeroed_far_from_home_y=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
-  }
-  
-  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
-  {
-    zeroed_far_from_home_x=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MAX_ENDSTOP;
-  }
+  if(monitor_secure_endstop){
+    
+    if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING)&& !READ(X_ENABLE_PIN) && !min_x_endstop_triggered && !(RPI_ERROR_STATUS()))
+    {
+      min_x_endstop_triggered=true; //trigger
+      max_x_endstop_triggered=false;
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=false;
+      
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_X_MIN_ENDSTOP;
+    }
+        
+    if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !max_x_endstop_triggered  && !(RPI_ERROR_STATUS()))
+    {
+      //&& !x_axis_endstop_sel has been temporarily disabled.
+      min_x_endstop_triggered=false; 
+      max_x_endstop_triggered=true;  //trigger
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=false;
 
-//  if(READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)
-//  {kill();}
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_X_MAX_ENDSTOP;
+    }
   
-  if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING) && zeroed_far_from_home_x && !READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MIN_ENDSTOP;
-    //kill();
-  }
-
-  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))      
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
-    //kill();
+    if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !min_y_endstop_triggered && !(RPI_ERROR_STATUS()))
+    {
+      min_x_endstop_triggered=false; 
+      max_x_endstop_triggered=false; 
+      min_y_endstop_triggered=true; //trigger
+      max_y_endstop_triggered=false;
+      
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
+    }
+    
+    if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING)&& !READ(Y_ENABLE_PIN) && !max_y_endstop_triggered && !(RPI_ERROR_STATUS()))      
+    {
+      
+      min_x_endstop_triggered=false; 
+      max_x_endstop_triggered=false; 
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=true;//trigger
+      
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
+    }
   }
  
  
@@ -5316,7 +5427,8 @@ char I2C_read(byte i2c_register)
 }
 
 void kill_by_door()
-{
+{ 
+
   store_last_amb_color();
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
@@ -5348,6 +5460,19 @@ void kill_by_door()
   
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_DOOR_OPEN;
+  
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(1500);
+  BEEP_OFF();
+  
 }
 
 void kill()
@@ -5376,6 +5501,7 @@ void kill()
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
 #endif
+
   SERIAL_ERROR_START;
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
@@ -5384,10 +5510,6 @@ void kill()
   
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
-  if(READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MAX_ENDSTOP;}
-  if(READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MIN_ENDSTOP;}
-  if(READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MIN_ENDSTOP;}
-  if(READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MAX_ENDSTOP;}
   
 }
 
