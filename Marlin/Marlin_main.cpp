@@ -3786,32 +3786,45 @@ void process_commands()
       store_last_amb_color();
       stop_fading();
       restore_last_amb_color();
-      /*
-      //intro tune
-      analogWrite(BEEPER, 180);
-
-      delay(50);      
-      BEEP_OFF();
-      delay(50);
-
-      analogWrite(BEEPER, 185);
-
-      delay(50);
-      BEEP_OFF();
-      delay(50);
-
-      analogWrite(BEEPER, 190);
-
-      delay(50);
-      BEEP_OFF();
-      delay(80);
       
-      analogWrite(BEEPER, 105);
-      
-      delay(100);
-      BEEP_OFF();
-      delay(100);
-      */
+      bool silent=false;      
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value==1)
+        {
+          silent=true; 
+        }
+      }
+
+      if (!silent){      
+        //play intro tune
+        analogWrite(BEEPER, 180);
+  
+        delay(50);      
+        BEEP_OFF();
+        delay(50);
+  
+        analogWrite(BEEPER, 185);
+  
+        delay(50);
+        BEEP_OFF();
+        delay(50);
+  
+        analogWrite(BEEPER, 190);
+  
+        delay(50);
+        BEEP_OFF();
+        delay(80);
+        
+        analogWrite(BEEPER, 105);
+        
+        delay(100);
+        BEEP_OFF();
+        delay(100);
+        
+      }
 
     }
     break;
