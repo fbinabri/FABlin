@@ -382,9 +382,9 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //#define DISABLE_MIN_ENDSTOPS
 
 // Disable max endstops for compatibility with endstop checking routine
-//#if defined(COREXY) && !defined(DISABLE_MAX_ENDSTOPS)
+#if defined(COREXY) && !defined(DISABLE_MAX_ENDSTOPS)
 //#define DISABLE_MAX_ENDSTOPS
-//#endif
+#endif
 
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
 #define X_ENABLE_ON 0
@@ -498,7 +498,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #define X_PROBE_OFFSET_FROM_EXTRUDER -17
   #define Y_PROBE_OFFSET_FROM_EXTRUDER -61.5
   #define Z_PROBE_OFFSET_FROM_EXTRUDER -31.65
-
+  
   #define Z_RAISE_BEFORE_HOMING 42       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
 
@@ -527,8 +527,6 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
   #ifdef Z_SAFE_HOMING
 
-   #define Z_SAFE_HOMING_X_POINT (73)    // X point for Z homing when homing all axis (G28)
-   #define Z_SAFE_HOMING_Y_POINT (29)    // Y point for Z homing when homing all axis (G28)
 
   #endif
 

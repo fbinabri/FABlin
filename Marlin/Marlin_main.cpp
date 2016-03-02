@@ -495,8 +495,8 @@ bool head_placed=false;
 unsigned long i2c_pre_millis=0;
 bool i2c_timeout=false;
 
-bool zeroed_far_from_home_x=false;
-bool zeroed_far_from_home_y=false;
+bool zeroed_far_from_home_x=true;
+bool zeroed_far_from_home_y=true;
 
 float safe_probing_offset=1;        //it will probe until the (probe length - safe_probing_offset) is reached
 
@@ -1677,7 +1677,7 @@ void process_commands()
         previous_millis_cmd = millis();
   
         enable_endstops(true);
-         
+        
         if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
          //Z movement move to 50 if g27 just happened.
          destination[Z_AXIS] = 20;    // move up
@@ -1685,7 +1685,6 @@ void process_commands()
          plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
          st_synchronize();
          }
-
          
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
@@ -1793,10 +1792,9 @@ void process_commands()
         #if Z_HOME_DIR < 0                      // If homing towards BED do Z last
           #ifndef Z_SAFE_HOMING
             if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
+ 
               #if defined (Z_RAISE_BEFORE_HOMING) && (Z_RAISE_BEFORE_HOMING > 0)
-                              
                 destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
-        
                 feedrate = max_feedrate[Z_AXIS];
                 plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
                 st_synchronize();
@@ -1805,8 +1803,9 @@ void process_commands()
             }
           #else                      // Z Safe mode activated.
             if(home_all_axis) {
-              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT - X_PROBE_OFFSET_FROM_EXTRUDER);
-              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT - Y_PROBE_OFFSET_FROM_EXTRUDER);
+              enable_endstops(false);
+              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT);
+              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT);
               destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
               feedrate = XY_TRAVEL_SPEED;
               current_position[Z_AXIS] = 0;
@@ -1816,7 +1815,7 @@ void process_commands()
               st_synchronize();
               current_position[X_AXIS] = destination[X_AXIS];
               current_position[Y_AXIS] = destination[Y_AXIS];
-  
+              enable_endstops(true);
               HOMEAXIS(Z);
             }
           }
@@ -1877,8 +1876,22 @@ void process_commands()
       home_Z_reverse=false;
       
       restore_last_amb_color();
+      
+      
+       enable_endstops(false);
+       //Z movement move to 50 if g27 just happened.
+       destination[X_AXIS] = current_position[X_AXIS]+1; 
+       destination[Y_AXIS] = current_position[Y_AXIS]+1; 
+       destination[Z_AXIS] = current_position[Z_AXIS]; 
+       destination[E_AXIS] = current_position[E_AXIS];    
+       feedrate = max_feedrate[Z_AXIS];
+       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+       st_synchronize();
+       enable_endstops(true);
+
       break;
 
+    
 #ifdef ENABLE_AUTO_BED_LEVELING
     case 29: // G29 Detailed Z-Probe, probes the bed at 3 or more points.
         {
@@ -3798,7 +3811,9 @@ void process_commands()
         }
       }
 
+      /*
       if (!silent){      
+        
         //play intro tune
         analogWrite(BEEPER, 180);
   
@@ -3818,13 +3833,14 @@ void process_commands()
         BEEP_OFF();
         delay(80);
         
-        analogWrite(BEEPER, 105);
+        analogWrite(BEEPER, 115);
         
         delay(100);
         BEEP_OFF();
         delay(100);
         
       }
+      */
 
     }
     break;
@@ -3845,7 +3861,7 @@ void process_commands()
       disable_e2();
       
       //outro tune
-      analogWrite(BEEPER, 105);
+      analogWrite(BEEPER, 115);
 
       delay(500);      
       BEEP_OFF();
@@ -4519,14 +4535,14 @@ void process_commands()
     }
     break;
         
-    case 786: // M787 - external power on/off pin control
+    case 786: // M786 - external power on/off pin control
       {
         //kill external power supply.
         SERIAL_PROTOCOL("SHUTDOWN!");
         digitalWrite(51, LOW);
       }
       break;
-
+      
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
@@ -5232,6 +5248,7 @@ void manage_secure_endstop()
     
     if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING)&& !READ(X_ENABLE_PIN) && !min_x_endstop_triggered && !(RPI_ERROR_STATUS()))
     {
+           
       min_x_endstop_triggered=true; //trigger
       max_x_endstop_triggered=false;
       min_y_endstop_triggered=false;
@@ -5244,6 +5261,7 @@ void manage_secure_endstop()
     if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !max_x_endstop_triggered  && !(RPI_ERROR_STATUS()))
     {
       //&& !x_axis_endstop_sel has been temporarily disabled.
+            
       min_x_endstop_triggered=false; 
       max_x_endstop_triggered=true;  //trigger
       min_y_endstop_triggered=false;
@@ -5255,6 +5273,7 @@ void manage_secure_endstop()
   
     if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !min_y_endstop_triggered && !(RPI_ERROR_STATUS()))
     {
+      
       min_x_endstop_triggered=false; 
       max_x_endstop_triggered=false; 
       min_y_endstop_triggered=true; //trigger
