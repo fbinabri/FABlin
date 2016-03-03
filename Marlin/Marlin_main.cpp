@@ -3966,6 +3966,9 @@ void process_commands()
         monitor_secure_endstop=false; 
         
         }
+      }else{
+        SERIAL_PROTOCOLLN(monitor_secure_endstop);
+        
       }
     }
     break;
@@ -4401,7 +4404,7 @@ void process_commands()
       if (code_seen('E'))
       {
         value = code_value();
-        ERROR_CODE=int(555);
+        ERROR_CODE=int(value);
       }
       
       RPI_ERROR_ACK_ON();    
