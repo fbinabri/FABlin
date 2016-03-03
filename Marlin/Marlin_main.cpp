@@ -206,6 +206,8 @@
 // M731 - Disable kill on Door Open
 // M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
 
+// M734   Enable /disable Endstop warnings
+// M735   Enable /disable silent mode (sounds except for power-on)
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
 // M742 - read REEL_LENS_OPEN sensor
@@ -302,6 +304,7 @@ float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
 bool inactivity = true;
+bool silent=false;
 
 //endstop configs
 bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
@@ -738,14 +741,14 @@ set_amb_color_fading(true,true,false,fading_speed);
 
 Read_Head_Info();
 
-
-_delay_ms(50);
-BEEP_OFF();
-_delay_ms(30);
-BEEP_ON();
-_delay_ms(50);
-BEEP_OFF();
-
+if (!silent){
+  _delay_ms(50);
+  BEEP_OFF();
+  _delay_ms(30);
+  BEEP_ON();
+  _delay_ms(50);
+  BEEP_OFF();
+}
 
 
 
@@ -3134,7 +3137,8 @@ void process_commands()
     #if (LARGE_FLASH == true && ( BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)))
     case 300: // M300
     {
-
+      
+      if (!silent){
       BEEP_ON()
       _delay_ms(50);
       BEEP_OFF()
@@ -3142,10 +3146,7 @@ void process_commands()
       BEEP_ON()
       _delay_ms(50);
       BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
+      }
 
     }
     break;
@@ -3404,7 +3405,6 @@ void process_commands()
           {
           #if BEEPER > 0
             SET_OUTPUT(BEEPER);
-
             WRITE(BEEPER,HIGH);
             delay(3);
             WRITE(BEEPER,LOW);
@@ -3799,19 +3799,7 @@ void process_commands()
       store_last_amb_color();
       stop_fading();
       restore_last_amb_color();
-      
-      bool silent=false;      
-      int value;
-      if (code_seen('S'))
-      {
-        value = code_value();
-        if(value==1)
-        {
-          silent=true; 
-        }
-      }
-
-      /*
+    
       if (!silent){      
         
         //play intro tune
@@ -3840,7 +3828,7 @@ void process_commands()
         delay(100);
         
       }
-      */
+      
 
     }
     break;
@@ -3861,30 +3849,31 @@ void process_commands()
       disable_e2();
       
       //outro tune
-      analogWrite(BEEPER, 115);
-
-      delay(500);      
-      BEEP_OFF();
-      delay(150);
-
-      analogWrite(BEEPER, 130);
-
-      delay(50);
-      BEEP_OFF();
-      delay(80);
-
-      analogWrite(BEEPER, 150);
-
-      delay(50);
-      BEEP_OFF();
-      delay(60);
-      
-      analogWrite(BEEPER, 180);
-      
-      delay(100);
-      BEEP_OFF();
-      delay(100);
-      
+      if (!silent){
+        analogWrite(BEEPER, 115);
+  
+        delay(500);      
+        BEEP_OFF();
+        delay(150);
+  
+        analogWrite(BEEPER, 130);
+  
+        delay(50);
+        BEEP_OFF();
+        delay(80);
+  
+        analogWrite(BEEPER, 150);
+  
+        delay(50);
+        BEEP_OFF();
+        delay(60);
+        
+        analogWrite(BEEPER, 180);
+        
+        delay(100);
+        BEEP_OFF();
+        delay(100);
+      }
       
       set_amb_color(0,0,0);
       store_last_amb_color();
@@ -3969,6 +3958,22 @@ void process_commands()
       }else{
         SERIAL_PROTOCOLLN(monitor_secure_endstop);
         
+      }
+    }
+    break;
+    
+    case 735:  //M735 S1-0 enable /disable silent mode (sounds except for power-on)
+    {
+    int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value==1)
+        {
+          silent=true; 
+        }else{
+          silent=false; 
+        }
       }
     }
     break;
@@ -4472,13 +4477,15 @@ void process_commands()
     case 779 :  // M779 - force head ID reading after reset /for testing purpose only
       {
          Read_Head_Info();
-
-        _delay_ms(50);
-        BEEP_OFF()
-        _delay_ms(30);
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
+      
+        if (!silent){
+          _delay_ms(50);
+          BEEP_OFF()
+          _delay_ms(30);
+          BEEP_ON()
+          _delay_ms(50);
+          BEEP_OFF()
+          }
       }
       break;
      
@@ -5496,6 +5503,8 @@ void kill_by_door()
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_DOOR_OPEN;
   
+  /*
+  if (!silent){
   BEEP_ON();
   delay(500);
   BEEP_OFF();
@@ -5507,7 +5516,8 @@ void kill_by_door()
   BEEP_ON();
   delay(1500);
   BEEP_OFF();
-  
+  }
+  */
 }
 
 void kill()
