@@ -527,6 +527,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
   #ifdef Z_SAFE_HOMING
 
+   #define Z_SAFE_HOMING_X_POINT (85.5)    // X point for Z homing when homing all axis (G28)
+   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28) 
 
   #endif
 
