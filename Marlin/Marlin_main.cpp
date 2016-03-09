@@ -847,45 +847,7 @@ void setup()
 
 
 void check_door_warning(){
-  
-   if ((((DOOR_OPEN_STATUS() && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)&& (!door_warning))
-    {
-      BEEP_ON(); 
-      //st_synchronize();
-      //previous_millis_cmd=millis();
-      door_warning_timer=millis();
-      door_warning=true;
-      
-      store_last_amb_color();
-      set_amb_color(255,0,0);  
-
-      //SERIAL_PROTOCOL("Open :");
-      //SERIAL_PROTOCOLLN(door_warning_timer);
-
-    }
-    
-  if (door_warning){    
-        unsigned long time_now=millis();
-        
-        if (time_now - door_warning_timer > door_warning_timeout){ 
-          //SERIAL_PROTOCOL("Timeout :");
-          //SERIAL_PROTOCOLLN(millis());
-          //5 secs have elapsed. kill by door 
-          door_warning=false;
-          door_warning_timer=0;        
-          kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
-        }else{
-          //else we hope the user shuts the door.        
-          if (!DOOR_OPEN_STATUS()){
-             //SERIAL_PROTOCOL("Aborted:");
-             //SERIAL_PROTOCOLLN(millis());
-            //door hase been closed: reset warning, abort countdown.
-            door_warning=false;
-            BEEP_OFF();
-            restore_last_amb_color();
-          }
-        }
-  }
+//moved
 }
 
 
@@ -5257,7 +5219,22 @@ void manage_inactivity()
   #endif
   check_axes_activity();
 
-//old POS
+   if ((((DOOR_OPEN_STATUS() && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)&& (!door_warning))
+    {
+      
+      BEEP_ON(); 
+      //door_warning_timer=millis();
+
+      store_last_amb_color();
+      set_amb_color(255,0,0);  
+ 
+      //door_warning_timer=0;        
+      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
+   
+  
+  
+
+    }
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
  //   {
