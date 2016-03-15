@@ -304,10 +304,6 @@ float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
 bool inactivity = true;
-bool door_warning=false;
-unsigned long door_warning_timer=0;
-unsigned long door_warning_timeout=20000;
-
 bool silent=false;
 
 //endstop configs
@@ -427,6 +423,7 @@ static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
+unsigned int last_gcode_num=-1; 
 
 static uint8_t tmp_extruder;
 
@@ -845,59 +842,23 @@ void setup()
   
 }
 
-
-void check_door_warning(){
-//moved
-}
-
-
 void loop()
 {
   if(buflen < (BUFSIZE-1))
     get_command();
-  #ifdef SDSUPPORT
-  card.checkautostart(false);
-  #endif
+  
   if(buflen)
   {
-    #ifdef SDSUPPORT
-      if(card.saving)
-      {
-        if(strstr_P(cmdbuffer[bufindr], PSTR("M29")) == NULL)
-        {
-          card.write_command(cmdbuffer[bufindr]);
-          if(card.logging)
-          {
-            process_commands();
-          }
-          else
-          {
-            SERIAL_PROTOCOLLNPGM(MSG_OK);
-          }
-        }
-        else
-        {
-          card.closefile();
-          SERIAL_PROTOCOLLNPGM(MSG_FILE_SAVED);
-        }
-      }
-      else
-      {
-        process_commands();
-      }
-    #else
-      process_commands();
-    #endif //SDSUPPORT
+    process_commands();
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
   }
+  
   //check heater every n milliseconds
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
-  check_door_warning();
-  //lcd_update();
-  
+  lcd_update();
   
 }
 
@@ -1613,6 +1574,7 @@ void process_commands()
 #endif
   if(code_seen('G'))
   {
+    last_gcode_num=(int)code_value();
     switch((int)code_value())
     {
     case 0: // G0 -> G1
@@ -1888,21 +1850,21 @@ void process_commands()
         endstops_hit_on_purpose();
         }
       z_probe_activation=true;
-      home_Z_reverse=false;
-      
       restore_last_amb_color();
       
-      
-       enable_endstops(false);
-       //Z movement move to 50 if g27 just happened.
-       destination[X_AXIS] = current_position[X_AXIS]+1; 
-       destination[Y_AXIS] = current_position[Y_AXIS]+1; 
-       destination[Z_AXIS] = current_position[Z_AXIS]; 
-       destination[E_AXIS] = current_position[E_AXIS];    
-       feedrate = max_feedrate[Z_AXIS];
-       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
-       st_synchronize();
-       enable_endstops(true);
+       if (home_Z_reverse){
+         //XY movement move to +1,+1 for g27 only (avoid endstop collision).
+         enable_endstops(false);
+         destination[X_AXIS] = current_position[X_AXIS]+1; 
+         destination[Y_AXIS] = current_position[Y_AXIS]+1; 
+         destination[Z_AXIS] = current_position[Z_AXIS]; 
+         destination[E_AXIS] = current_position[E_AXIS];    
+         feedrate = max_feedrate[Z_AXIS];
+         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+         st_synchronize();
+         enable_endstops(true);
+         home_Z_reverse=false;
+      }
 
       break;
 
@@ -4565,6 +4527,14 @@ void process_commands()
       }
       break;
       
+     /* 
+    case 792: //M792 - development: report the last gcode number.
+     {
+      SERIAL_PROTOCOL("LAST LINE: ");
+      SERIAL_PROTOCOLLN(last_gcode_num);
+      SERIAL_PROTOCOL("----");
+    }*/
+
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
@@ -5117,8 +5087,6 @@ void handle_status_leds(void) {
 }
 #endif
 
-
-
 void manage_inactivity()
 {
   
@@ -5219,22 +5187,22 @@ void manage_inactivity()
   #endif
   check_axes_activity();
 
-   if ((((DOOR_OPEN_STATUS() && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)&& (!door_warning))
+     if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
       
       BEEP_ON(); 
-      //door_warning_timer=millis();
-
-      store_last_amb_color();
-      set_amb_color(255,0,0);  
  
-      //door_warning_timer=0;        
+      //store_last_amb_color();
+      //set_amb_color(255,0,0);  
+ 
+      ERROR_CODE=ERROR_DOOR_OPEN;
+      WRITE(RPI_RECOVERY_PIN,1);
+      //RPI_ERROR_ACK_ON();
+         
       kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
    
-  
-  
-
-    }
+    }  
+ 
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
  //   {
@@ -5495,8 +5463,7 @@ char I2C_read(byte i2c_register)
 }
 
 void kill_by_door()
-{ 
-
+{
   store_last_amb_color();
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
@@ -5526,24 +5493,8 @@ void kill_by_door()
   suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
   
-  RPI_ERROR_ACK_ON();
-  ERROR_CODE=ERROR_DOOR_OPEN;
-  
-  /*
-  if (!silent){
-  BEEP_ON();
-  delay(500);
-  BEEP_OFF();
-  delay(100);
-  BEEP_ON();
-  delay(500);
-  BEEP_OFF();
-  delay(100);
-  BEEP_ON();
-  delay(1500);
-  BEEP_OFF();
-  }
-  */
+  //RPI_ERROR_ACK_ON();
+  //ERROR_CODE=ERROR_DOOR_OPEN;
 }
 
 void kill()
