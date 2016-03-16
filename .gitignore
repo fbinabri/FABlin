@@ -5,3 +5,4 @@ applet/
 *.rej
 *.bak
 Marlin/Marlin.h
+Marlin/Marlin_main.cpp
