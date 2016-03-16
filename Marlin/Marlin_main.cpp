@@ -842,6 +842,10 @@ void setup()
   
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> parent of e6f9a55... emergency pre-warning test
 void loop()
 {
   if(buflen < (BUFSIZE-1))
@@ -859,7 +863,10 @@ void loop()
   manage_inactivity();
   checkHitEndstops();
   lcd_update();
+<<<<<<< HEAD
   
+=======
+>>>>>>> parent of e6f9a55... emergency pre-warning test
 }
 
 void get_command()
@@ -5200,6 +5207,7 @@ void manage_inactivity()
   #endif
   check_axes_activity();
 
+<<<<<<< HEAD
      if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {     
       //BEEP_ON(); 
@@ -5218,6 +5226,12 @@ void manage_inactivity()
       
     }  
  
+=======
+ if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
+    {
+     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
+    }
+>>>>>>> parent of e6f9a55... emergency pre-warning test
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
  //   {
