@@ -423,7 +423,6 @@ static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
-unsigned int last_gcode_num=-1; 
 
 static uint8_t tmp_extruder;
 
@@ -842,31 +841,52 @@ void setup()
   
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> parent of e6f9a55... emergency pre-warning test
 void loop()
 {
   if(buflen < (BUFSIZE-1))
     get_command();
-  
+  #ifdef SDSUPPORT
+  card.checkautostart(false);
+  #endif
   if(buflen)
   {
-    process_commands();
+    #ifdef SDSUPPORT
+      if(card.saving)
+      {
+        if(strstr_P(cmdbuffer[bufindr], PSTR("M29")) == NULL)
+        {
+          card.write_command(cmdbuffer[bufindr]);
+          if(card.logging)
+          {
+            process_commands();
+          }
+          else
+          {
+            SERIAL_PROTOCOLLNPGM(MSG_OK);
+          }
+        }
+        else
+        {
+          card.closefile();
+          SERIAL_PROTOCOLLNPGM(MSG_FILE_SAVED);
+        }
+      }
+      else
+      {
+        process_commands();
+      }
+    #else
+      process_commands();
+    #endif //SDSUPPORT
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
   }
-  
   //check heater every n milliseconds
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
   lcd_update();
-<<<<<<< HEAD
-  
-=======
->>>>>>> parent of e6f9a55... emergency pre-warning test
 }
 
 void get_command()
@@ -1581,7 +1601,6 @@ void process_commands()
 #endif
   if(code_seen('G'))
   {
-    last_gcode_num=(int)code_value();
     switch((int)code_value())
     {
     case 0: // G0 -> G1
@@ -1662,8 +1681,7 @@ void process_commands()
   
         enable_endstops(true);
         
-        /*
-        if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
+        /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
          //Z movement move to 50 if g27 just happened.
          destination[Z_AXIS] = 20;    // move up
          feedrate = max_feedrate[Z_AXIS];
@@ -1671,8 +1689,6 @@ void process_commands()
          st_synchronize();
          }
          */
-         
-        if(Stopped){break;}
          
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
@@ -1715,8 +1731,7 @@ void process_commands()
           }
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
           st_synchronize();
-          if(Stopped){break;}
-          
+  
           axis_is_at_home(X_AXIS);
           axis_is_at_home(Y_AXIS);
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1730,7 +1745,6 @@ void process_commands()
           current_position[X_AXIS] = destination[X_AXIS];
           current_position[Y_AXIS] = destination[Y_AXIS];
           current_position[Z_AXIS] = destination[Z_AXIS];
-          
         }
         #endif
         
@@ -1753,16 +1767,14 @@ void process_commands()
           active_extruder_parked = true;
         #else
           HOMEAXIS(X);
-          if(Stopped){break;}
         #endif
         }
   
-
+        if(Stopped){break;}
         
         if((home_all_axis) || (code_seen(axis_codes[Y_AXIS]))) {
           zeroed_far_from_home_y=false;
           HOMEAXIS(Y);
-          if(Stopped){break;}
         }
   
         if(code_seen(axis_codes[X_AXIS]))
@@ -1792,7 +1804,6 @@ void process_commands()
                 st_synchronize();
               #endif
               HOMEAXIS(Z);
-              
             }
           #else                      // Z Safe mode activated.
             if(home_all_axis) {
@@ -1866,22 +1877,21 @@ void process_commands()
         endstops_hit_on_purpose();
         }
       z_probe_activation=true;
+      home_Z_reverse=false;
+      
       restore_last_amb_color();
       
-      /*
-       //XY movement move to +1,+1
+      
        enable_endstops(false);
-       destination[X_AXIS] = current_position[X_AXIS]1; 
-       destination[Y_AXIS] = current_position[Y_AXIS]; 
+       //Z movement move to 50 if g27 just happened.
+       destination[X_AXIS] = current_position[X_AXIS]+1; 
+       destination[Y_AXIS] = current_position[Y_AXIS]+1; 
        destination[Z_AXIS] = current_position[Z_AXIS]; 
        destination[E_AXIS] = current_position[E_AXIS];    
        feedrate = max_feedrate[Z_AXIS];
        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
        st_synchronize();
-       
-       //enable_endstops(true);
-       home_Z_reverse=false;
-      */
+       enable_endstops(true);
 
       break;
 
@@ -3881,9 +3891,6 @@ void process_commands()
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
-      //enable_endstops(true);
-      //Stopped = false;
-      //restore_last_amb_color();    
     }
     break;
     
@@ -4547,14 +4554,6 @@ void process_commands()
       }
       break;
       
-     /* 
-    case 792: //M792 - development: report the last gcode number.
-     {
-      SERIAL_PROTOCOL("LAST LINE: ");
-      SERIAL_PROTOCOLLN(last_gcode_num);
-      SERIAL_PROTOCOL("----");
-    }*/
-
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
@@ -5207,31 +5206,10 @@ void manage_inactivity()
   #endif
   check_axes_activity();
 
-<<<<<<< HEAD
-     if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
-    {     
-      //BEEP_ON(); 
-      //enable_door_kill=false;
-      triggered_kill=true;
-      Stopped = true;
-      
-      //store_last_amb_color();
-      set_amb_color(255,0,0);  
- 
-      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
-      
-      ERROR_CODE=ERROR_DOOR_OPEN;
-      RPI_ERROR_ACK_ON();  
-      
-      
-    }  
- 
-=======
  if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
     }
->>>>>>> parent of e6f9a55... emergency pre-warning test
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
  //   {
@@ -5261,12 +5239,12 @@ void manage_inactivity()
       ERROR_CODE=ERROR_Z_BOTH_TRIGGERED;
     }
 
-/*
+
  if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
     {
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
-*/
+
 
  manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
@@ -5492,7 +5470,8 @@ char I2C_read(byte i2c_register)
 }
 
 void kill_by_door()
-{
+{ 
+
   store_last_amb_color();
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
@@ -5516,14 +5495,30 @@ void kill_by_door()
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
 #endif
-//  SERIAL_ERROR_START;
-//  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
-//  LCD_ALERTMESSAGEPGM(MSG_KILLED);
-//  suicide();
+  SERIAL_ERROR_START;
+  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
+  LCD_ALERTMESSAGEPGM(MSG_KILLED);
+  suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
   
-  //RPI_ERROR_ACK_ON();
-  //ERROR_CODE=ERROR_DOOR_OPEN;
+  RPI_ERROR_ACK_ON();
+  ERROR_CODE=ERROR_DOOR_OPEN;
+  
+  /*
+  if (!silent){
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(1500);
+  BEEP_OFF();
+  }
+  */
 }
 
 void kill()
@@ -5553,15 +5548,14 @@ void kill()
   pinMode(PS_ON_PIN,INPUT);
 #endif
 
-  //SERIAL_ERROR_START;
-  //SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
-  //LCD_ALERTMESSAGEPGM(MSG_KILLED);
-  //suicide();
+  SERIAL_ERROR_START;
+  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
+  LCD_ALERTMESSAGEPGM(MSG_KILLED);
+  suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
   
-  ERROR_CODE=ERROR_KILLED;
   RPI_ERROR_ACK_ON();
- 
+  ERROR_CODE=ERROR_KILLED;
   
 }
 
