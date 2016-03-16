@@ -1655,6 +1655,7 @@ void process_commands()
   
         enable_endstops(true);
         
+        /*
         if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
          //Z movement move to 50 if g27 just happened.
          destination[Z_AXIS] = 20;    // move up
@@ -1662,6 +1663,9 @@ void process_commands()
          plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
          st_synchronize();
          }
+         */
+         
+        if(Stopped){break;}
          
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
@@ -1704,7 +1708,8 @@ void process_commands()
           }
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
           st_synchronize();
-  
+          if(Stopped){break;}
+          
           axis_is_at_home(X_AXIS);
           axis_is_at_home(Y_AXIS);
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1718,6 +1723,7 @@ void process_commands()
           current_position[X_AXIS] = destination[X_AXIS];
           current_position[Y_AXIS] = destination[Y_AXIS];
           current_position[Z_AXIS] = destination[Z_AXIS];
+          
         }
         #endif
         
@@ -1740,14 +1746,16 @@ void process_commands()
           active_extruder_parked = true;
         #else
           HOMEAXIS(X);
+          if(Stopped){break;}
         #endif
         }
   
-        if(Stopped){break;}
+
         
         if((home_all_axis) || (code_seen(axis_codes[Y_AXIS]))) {
           zeroed_far_from_home_y=false;
           HOMEAXIS(Y);
+          if(Stopped){break;}
         }
   
         if(code_seen(axis_codes[X_AXIS]))
@@ -1777,6 +1785,7 @@ void process_commands()
                 st_synchronize();
               #endif
               HOMEAXIS(Z);
+              
             }
           #else                      // Z Safe mode activated.
             if(home_all_axis) {
@@ -1852,19 +1861,20 @@ void process_commands()
       z_probe_activation=true;
       restore_last_amb_color();
       
-       if (home_Z_reverse){
-         //XY movement move to +1,+1 for g27 only (avoid endstop collision).
-         enable_endstops(false);
-         destination[X_AXIS] = current_position[X_AXIS]+1; 
-         destination[Y_AXIS] = current_position[Y_AXIS]+1; 
-         destination[Z_AXIS] = current_position[Z_AXIS]; 
-         destination[E_AXIS] = current_position[E_AXIS];    
-         feedrate = max_feedrate[Z_AXIS];
-         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
-         st_synchronize();
-         enable_endstops(true);
-         home_Z_reverse=false;
-      }
+      /*
+       //XY movement move to +1,+1
+       enable_endstops(false);
+       destination[X_AXIS] = current_position[X_AXIS]1; 
+       destination[Y_AXIS] = current_position[Y_AXIS]; 
+       destination[Z_AXIS] = current_position[Z_AXIS]; 
+       destination[E_AXIS] = current_position[E_AXIS];    
+       feedrate = max_feedrate[Z_AXIS];
+       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+       st_synchronize();
+       
+       //enable_endstops(true);
+       home_Z_reverse=false;
+      */
 
       break;
 
@@ -3864,6 +3874,9 @@ void process_commands()
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
+      //enable_endstops(true);
+      //Stopped = false;
+      //restore_last_amb_color();    
     }
     break;
     
@@ -5188,19 +5201,21 @@ void manage_inactivity()
   check_axes_activity();
 
      if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
-    {
+    {     
+      //BEEP_ON(); 
+      //enable_door_kill=false;
+      triggered_kill=true;
+      Stopped = true;
       
-      BEEP_ON(); 
- 
       //store_last_amb_color();
-      //set_amb_color(255,0,0);  
+      set_amb_color(255,0,0);  
  
-      ERROR_CODE=ERROR_DOOR_OPEN;
-      WRITE(RPI_RECOVERY_PIN,1);
-      //RPI_ERROR_ACK_ON();
-         
       kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
-   
+      
+      ERROR_CODE=ERROR_DOOR_OPEN;
+      RPI_ERROR_ACK_ON();  
+      
+      
     }  
  
 
@@ -5232,12 +5247,12 @@ void manage_inactivity()
       ERROR_CODE=ERROR_Z_BOTH_TRIGGERED;
     }
 
-
+/*
  if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
     {
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
-
+*/
 
  manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
@@ -5487,10 +5502,10 @@ void kill_by_door()
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
 #endif
-  SERIAL_ERROR_START;
-  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
-  LCD_ALERTMESSAGEPGM(MSG_KILLED);
-  suicide();
+//  SERIAL_ERROR_START;
+//  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
+//  LCD_ALERTMESSAGEPGM(MSG_KILLED);
+//  suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
   
   //RPI_ERROR_ACK_ON();
@@ -5524,14 +5539,15 @@ void kill()
   pinMode(PS_ON_PIN,INPUT);
 #endif
 
-  SERIAL_ERROR_START;
-  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
-  LCD_ALERTMESSAGEPGM(MSG_KILLED);
-  suicide();
+  //SERIAL_ERROR_START;
+  //SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
+  //LCD_ALERTMESSAGEPGM(MSG_KILLED);
+  //suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
   
-  RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
+  RPI_ERROR_ACK_ON();
+ 
   
 }
 
