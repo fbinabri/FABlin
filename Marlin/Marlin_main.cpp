@@ -477,7 +477,7 @@ bool z_probe_activation=true;
 bool home_Z_reverse=false;
 
 bool x_axis_endstop_sel=false;
-bool monitor_secure_endstop=true;
+bool monitor_secure_endstop=false; //default is off
 
 bool min_x_endstop_triggered=false;
 bool max_x_endstop_triggered=false;
@@ -3986,9 +3986,23 @@ void process_commands()
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
         enable_endstops(false);
+               
         
         if(!MILL_MOTOR_STATUS())
             {
+              
+          //wait
+          int codenum=1500;
+          //st_synchronize();
+          codenum += millis();  // keep track of when we started waiting
+          previous_millis_cmd = millis();
+          while(millis()  < codenum ){
+            manage_heater();
+            manage_inactivity();
+            lcd_update();
+          }
+              
+              
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
               {
 	      servos[servo_index].attach(0);
@@ -4039,6 +4053,20 @@ void process_commands()
       
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
+        
+        
+          //wait
+          int codenum=1500;
+          //st_synchronize();
+          codenum += millis();  // keep track of when we started waiting
+          previous_millis_cmd = millis();
+          while(millis()  < codenum ){
+            manage_heater();
+            manage_inactivity();
+            lcd_update();
+          }
+
+
         inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
@@ -4097,6 +4125,19 @@ void process_commands()
       
    case 5: // M5 SPINDLE OFF
       {
+          //wait
+          int codenum=1500;
+          //st_synchronize();
+          codenum += millis();  // keep track of when we started waiting
+          previous_millis_cmd = millis();
+          while(millis()  < codenum ){
+            manage_heater();
+            manage_inactivity();
+            lcd_update();
+          }
+
+
+        st_synchronize(); //wait movement finish.
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
@@ -4545,6 +4586,29 @@ void process_commands()
       }
     }
     break;
+    
+    
+    /*
+#define X_STEP_PIN         54
+#define X_DIR_PIN          55
+#define X_ENABLE_PIN       38
+
+#define Y_STEP_PIN         60
+#define Y_DIR_PIN          61
+#define Y_ENABLE_PIN       56
+
+#define Z_STEP_PIN         46
+#define Z_DIR_PIN          48
+#define Z_ENABLE_PIN       62
+
+#define E0_STEP_PIN        26
+#define E0_DIR_PIN         28
+#define E0_ENABLE_PIN      24
+
+#define E1_STEP_PIN        36
+#define E1_DIR_PIN         34
+#define E1_ENABLE_PIN      30
+    */
         
     case 786: // M786 - external power on/off pin control
       {
@@ -4553,6 +4617,56 @@ void process_commands()
         digitalWrite(51, LOW);
       }
       break;
+
+   case 792: {
+      //SWITCH XY/AB axis (5th axis interpolation mode) 
+      //with this you can pilot A and B axis with X/Y G0 comands in full interpolation (marlin does not allow this natively)
+      if (code_seen('S')) {
+          int enable=code_value();
+          if (enable==1){
+             //enable 4/5th axis mode
+             /*
+             Original E0/E1 values:
+              //Steps/unit X72.58 Y72.58 Z2133.33 E177.78
+              #define E0_STEP_PIN        26
+              #define E0_DIR_PIN         28
+              #define E0_ENABLE_PIN      24
+              
+              #define E1_STEP_PIN        36
+              #define E1_DIR_PIN         34
+              #define E1_ENABLE_PIN      30
+             */
+             
+            #define X_STEP_PIN         26
+            #define X_DIR_PIN          28
+            #define X_ENABLE_PIN       24
+
+            #define Y_STEP_PIN         36
+            #define Y_DIR_PIN          34
+            #define Y_ENABLE_PIN       30
+            
+            
+            axis_steps_per_unit[0]=177.78; 
+            axis_steps_per_unit[1]=8.888;
+            
+          }
+              //disable 5th axis
+              #define X_STEP_PIN         54
+              #define X_DIR_PIN          55
+              #define X_ENABLE_PIN       38
+              
+              #define Y_STEP_PIN         60
+              #define Y_DIR_PIN          61
+              #define Y_ENABLE_PIN       56
+              
+              axis_steps_per_unit[0]=72.58;
+              axis_steps_per_unit[1]=72.58;
+
+          }else{
+              SERIAL_PROTOCOL("Usage: M792 S[0-1]");
+      }
+    }
+    break;
       
     case 793: // M793 - Set/read installed head soft ID
       {
@@ -4562,6 +4676,8 @@ void process_commands()
         SERIAL_PROTOCOLLN(installed_head_id);
       }
       break;
+
+
 
     
 #ifdef THERMISTOR_HOTSWAP
@@ -5277,7 +5393,6 @@ void manage_secure_endstop()
       max_x_endstop_triggered=true;  //trigger
       min_y_endstop_triggered=false;
       max_y_endstop_triggered=false;
-
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_X_MAX_ENDSTOP;
     }
