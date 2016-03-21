@@ -3997,9 +3997,7 @@ void process_commands()
           codenum += millis();  // keep track of when we started waiting
           previous_millis_cmd = millis();
           while(millis()  < codenum ){
-            manage_heater();
-            manage_inactivity();
-            lcd_update();
+            //do nothing
           }
               
               
@@ -4061,9 +4059,7 @@ void process_commands()
           codenum += millis();  // keep track of when we started waiting
           previous_millis_cmd = millis();
           while(millis()  < codenum ){
-            manage_heater();
-            manage_inactivity();
-            lcd_update();
+            //do nothing
           }
 
 
@@ -4131,9 +4127,7 @@ void process_commands()
           codenum += millis();  // keep track of when we started waiting
           previous_millis_cmd = millis();
           while(millis()  < codenum ){
-            manage_heater();
-            manage_inactivity();
-            lcd_update();
+               //do nothing
           }
 
 
@@ -5551,6 +5545,12 @@ void Read_Head_Info()
     {
        head_placed=true;
     }  
+    
+    /* installed_head_id!=0{
+    head_placed=true;
+    }else{
+    head_placed=false;
+    }*/
 
 }  
 
