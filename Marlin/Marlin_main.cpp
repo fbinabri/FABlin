@@ -1884,14 +1884,21 @@ void process_commands()
       
        enable_endstops(false);
        //Z movement move to 50 if g27 just happened.
-       destination[X_AXIS] = current_position[X_AXIS]+1; 
-       destination[Y_AXIS] = current_position[Y_AXIS]+1; 
+       destination[X_AXIS] = current_position[X_AXIS]+2; 
+       destination[Y_AXIS] = current_position[Y_AXIS]+2; 
        destination[Z_AXIS] = current_position[Z_AXIS]; 
        destination[E_AXIS] = current_position[E_AXIS];    
        feedrate = max_feedrate[Z_AXIS];
        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+
+      current_position[X_AXIS] = destination[X_AXIS];
+      current_position[Y_AXIS] = destination[Y_AXIS];
+      current_position[Z_AXIS] = destination[Z_AXIS];
+      plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+
        st_synchronize();
        enable_endstops(true);
+       
 
       break;
 
