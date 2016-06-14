@@ -889,7 +889,7 @@
 #define BEEPER	4
 
 #define HEATER_0_PIN       10   
-#define HEATER_1_PIN       10
+#define HEATER_1_PIN       -1
 #define HEATER_2_PIN       -1
 #define HEATER_BED_PIN   8
 #define FAN_PIN            9
@@ -907,6 +907,11 @@
 #define	NOT_REEL_LENS_OPEN_PIN	70
 #define	LIGHT_SIGN_ON_PIN	83
 #define	RPI_RECOVERY_PIN	79
+
+//power_off_pins
+#define	PWR_IN_PIN	50
+#define PWR_OUT_PIN	51
+
 
 //additional IO
 #define	RED_PIN	        5
