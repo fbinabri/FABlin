@@ -731,7 +731,7 @@ set_amb_color(0,0,0);
 set_amb_color_fading(true,true,false,fading_speed);
 
 
-Read_Head_Info();
+//Read_Head_Info();
 
 
 _delay_ms(50);
@@ -4457,6 +4457,19 @@ void process_commands()
     case 787: // M787 - external power on/off pin control
       {
               SERIAL_PROTOCOL(READ(PWR_IN_PIN));  
+                        
+      }
+      break;
+      
+     case 788: // M788 stepper test
+      {
+              int c;
+              for(c=0; c<50; c++){
+                digitalWrite(20, 0);
+                delay(200); 
+                digitalWrite(20, 1);
+                delay(200); 
+              }
                         
       }
       break;
