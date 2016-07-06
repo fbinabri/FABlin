@@ -644,7 +644,7 @@ void servo_init()
 
 void FabtotumIO_init()
 {
-BEEP_ON()
+//EP_ON()
 
 pinMode(RED_PIN,OUTPUT);
 pinMode(GREEN_PIN,OUTPUT);
@@ -736,10 +736,14 @@ set_amb_color_fading(true,true,false,fading_speed);
 
 _delay_ms(50);
 BEEP_OFF()
-_delay_ms(30);
+_delay_ms(50);
 BEEP_ON()
 _delay_ms(50);
 BEEP_OFF()
+
+
+BEEP_ON()
+
 
 
 
