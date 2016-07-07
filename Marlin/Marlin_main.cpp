@@ -644,7 +644,7 @@ void servo_init()
 
 void FabtotumIO_init()
 {
-//EP_ON()
+BEEP_ON()
 
 pinMode(RED_PIN,OUTPUT);
 pinMode(GREEN_PIN,OUTPUT);
@@ -740,12 +740,6 @@ _delay_ms(50);
 BEEP_ON()
 _delay_ms(50);
 BEEP_OFF()
-
-
-BEEP_ON()
-
-
-
 
 }
 
@@ -843,7 +837,8 @@ void poweroff_rqs(){
 void check_power_btn(){
   //check if pin is high
   if(READ(PWR_IN_PIN)){
-    poweroff_rqs();
+    //currently not supported 
+    //poweroff_rqs();
   }            
 }
 
@@ -4454,14 +4449,13 @@ void process_commands()
         
     case 786: // M786 - external power on/off pin control
       {
-          poweroff_rqs();
+          //poweroff_rqs();
       }
       break;
 
     case 787: // M787 - external power on/off pin control
       {
-              SERIAL_PROTOCOL(READ(PWR_IN_PIN));  
-                        
+              SERIAL_PROTOCOL(READ(PWR_IN_PIN)); 
       }
       break;
       
