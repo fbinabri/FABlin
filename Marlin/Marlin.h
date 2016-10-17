@@ -360,8 +360,18 @@ extern unsigned int installed_head_id;
 #define RPI_ERROR_STATUS()       READ(RPI_RECOVERY_PIN)
 #define RASPI_MAX_TURN_OFF_DELAY  3000  //30 seconds, value in tens of ms
 
+<<<<<<< HEAD
 #define BEEP_ON()  TCCR0B = TCCR0B & 0b11111000 | 0x02; analogWrite(BEEPER, 127);
 #define BEEP_OFF()  TCCR0B = TCCR0B & 0b11111000 | 0x03; analogWrite(BEEPER, 255);
+=======
+#define BEEP_ON()  TCCR0B = TCCR0B & 0b11111000 | 0x03; analogWrite(BEEPER, 127);
+#define BEEP_OFF()  TCCR0B = TCCR0B & 0b11111000 | 0x04; analogWrite(BEEPER, 255);
+
+
+//#define BEEP_ON()  analogWrite(BEEPER, 127);
+//#define BEEP_OFF() analogWrite(BEEPER, 255);
+
+>>>>>>> dev
 
 #define SERVO_SPINDLE_MAX  1832    //(MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
 #define SERVO_SPINDLE_MIN  1148
@@ -406,7 +416,14 @@ extern unsigned int installed_head_id;
 #define ERROR_AMBIENT_TEMP   122
 #define ERROR_EXTRUDE_MINTEMP   123
 #define ERROR_LONG_EXTRUSION   124
+<<<<<<< HEAD
 //#define ERROR_HEAD_ABSENT    125
+=======
+#define ERROR_HEAD_ABSENT    125
+
+//POWER SHUTDOWN REQUEST:
+#define ERROR_PWR_OFF    999
+>>>>>>> dev
 
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)

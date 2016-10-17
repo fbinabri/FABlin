@@ -4,3 +4,7 @@ applet/
 *.orig
 *.rej
 *.bak
+<<<<<<< HEAD
+=======
+Marlin/Marlin.h
+>>>>>>> dev
