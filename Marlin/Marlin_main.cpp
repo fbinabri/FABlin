@@ -206,11 +206,8 @@
 // M731 - Disable kill on Door Open
 // M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
 
-<<<<<<< HEAD
 // M734   Enable /disable Endstop warnings
 // M735   Enable /disable silent mode (sounds except for power-on)
-=======
->>>>>>> dev
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
 // M742 - read REEL_LENS_OPEN sensor
@@ -307,10 +304,7 @@ float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
 bool inactivity = true;
-<<<<<<< HEAD
 bool silent=false;
-=======
->>>>>>> dev
 
 //endstop configs
 bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
@@ -483,15 +477,12 @@ bool z_probe_activation=true;
 bool home_Z_reverse=false;
 
 bool x_axis_endstop_sel=false;
-<<<<<<< HEAD
 bool monitor_secure_endstop=false; //default is off
 
 bool min_x_endstop_triggered=false;
 bool max_x_endstop_triggered=false;
 bool min_y_endstop_triggered=false;
 bool max_y_endstop_triggered=false;
-=======
->>>>>>> dev
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -662,11 +653,7 @@ void servo_init()
 
 void FabtotumIO_init()
 {
-<<<<<<< HEAD
 BEEP_ON();
-=======
-BEEP_ON()
->>>>>>> dev
 
 pinMode(RED_PIN,OUTPUT);
 pinMode(GREEN_PIN,OUTPUT);
@@ -688,14 +675,8 @@ pinMode(PRESSURE_ANALOG_PIN,INPUT);
 pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
 
 //POWER MABNAHGEMENT
-<<<<<<< HEAD
 pinMode(51, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
 digitalWrite(51, HIGH);
-=======
-pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
-pinMode(PWR_IN_PIN,INPUT);  //set external PSU shutdown pin (Optional on I2C)
-digitalWrite(PWR_OUT_PIN, HIGH);
->>>>>>> dev
 
 //fastio init
 // SET_INPUT(IO)  ; SET_OUTPUT(IO);
@@ -758,7 +739,6 @@ set_amb_color(0,0,0);
 set_amb_color_fading(true,true,false,fading_speed);
 
 
-<<<<<<< HEAD
 Read_Head_Info();
 
 if (!silent){
@@ -771,17 +751,6 @@ if (!silent){
 }
 
 
-=======
-//Read_Head_Info();
-
-
-_delay_ms(50);
-BEEP_OFF()
-_delay_ms(50);
-BEEP_ON()
-_delay_ms(50);
-BEEP_OFF()
->>>>>>> dev
 
 }
 
@@ -848,7 +817,6 @@ void setup()
   #ifdef DIGIPOT_I2C
     digipot_i2c_init();
   #endif
-<<<<<<< HEAD
   
   //initialize smart endstop check
     if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
@@ -871,42 +839,6 @@ void setup()
     max_y_endstop_triggered=true;
   }
   
-=======
-}
-
-void poweroff_rqs(){
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_PWR_OFF;       
-    
-    
-    inactivity=true;
-  
-    //kill external power supply
-    digitalWrite(PWR_OUT_PIN, LOW);
-    delay(2000);
-    digitalWrite(PWR_OUT_PIN, HIGH);
-
-    store_last_amb_color();
-    set_amb_color_fading(true,true,true,fading_speed);
-
-    //beep
-    BEEP_ON()
-    _delay_ms(50);
-    BEEP_OFF()
-    _delay_ms(50);
-    BEEP_ON()
-    _delay_ms(50);
-    BEEP_OFF()
-    
-}
-
-void check_power_btn(){
-  //check if pin is high
-  if(READ(PWR_IN_PIN)){
-    //currently not supported 
-    //poweroff_rqs();
-  }            
->>>>>>> dev
 }
 
 
@@ -954,18 +886,9 @@ void loop()
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
-<<<<<<< HEAD
   lcd_update();
 }
 
-=======
-  check_power_btn();
-  lcd_update();
-}
-
-
-
->>>>>>> dev
 void get_command()
 {
   while( MYSERIAL.available() > 0  && buflen < BUFSIZE) {
@@ -1757,7 +1680,6 @@ void process_commands()
         previous_millis_cmd = millis();
   
         enable_endstops(true);
-<<<<<<< HEAD
         
         /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
          //Z movement move to 50 if g27 just happened.
@@ -1768,9 +1690,6 @@ void process_commands()
          }
          */
          
-=======
-  
->>>>>>> dev
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
         }
@@ -1877,10 +1796,7 @@ void process_commands()
         #if Z_HOME_DIR < 0                      // If homing towards BED do Z last
           #ifndef Z_SAFE_HOMING
             if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
-<<<<<<< HEAD
  
-=======
->>>>>>> dev
               #if defined (Z_RAISE_BEFORE_HOMING) && (Z_RAISE_BEFORE_HOMING > 0)
                 destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
                 feedrate = max_feedrate[Z_AXIS];
@@ -1891,14 +1807,9 @@ void process_commands()
             }
           #else                      // Z Safe mode activated.
             if(home_all_axis) {
-<<<<<<< HEAD
               enable_endstops(false);
               destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT);
               destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT);
-=======
-              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT - X_PROBE_OFFSET_FROM_EXTRUDER);
-              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT - Y_PROBE_OFFSET_FROM_EXTRUDER);
->>>>>>> dev
               destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
               feedrate = XY_TRAVEL_SPEED;
               current_position[Z_AXIS] = 0;
@@ -1908,11 +1819,7 @@ void process_commands()
               st_synchronize();
               current_position[X_AXIS] = destination[X_AXIS];
               current_position[Y_AXIS] = destination[Y_AXIS];
-<<<<<<< HEAD
               enable_endstops(true);
-=======
-  
->>>>>>> dev
               HOMEAXIS(Z);
             }
           }
@@ -1973,7 +1880,6 @@ void process_commands()
       home_Z_reverse=false;
       
       restore_last_amb_color();
-<<<<<<< HEAD
       
       
        enable_endstops(false);
@@ -1997,10 +1903,6 @@ void process_commands()
       break;
 
     
-=======
-      break;
-
->>>>>>> dev
 #ifdef ENABLE_AUTO_BED_LEVELING
     case 29: // G29 Detailed Z-Probe, probes the bed at 3 or more points.
         {
@@ -3243,7 +3145,6 @@ void process_commands()
     #if (LARGE_FLASH == true && ( BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)))
     case 300: // M300
     {
-<<<<<<< HEAD
       
       if (!silent){
       BEEP_ON()
@@ -3255,34 +3156,6 @@ void process_commands()
       BEEP_OFF()
       }
 
-=======
-//      int beepS = code_seen('S') ? code_value() : 110;
-//      int beepP = code_seen('P') ? code_value() : 1000;
-//      if (beepS > 0)
-//      {
-//        #if BEEPER > 0
-//          tone(BEEPER, beepS);
-//          delay(beepP);
-//          noTone(BEEPER);
-//        #elif defined(ULTRALCD)
-//		  lcd_buzz(beepS, beepP);
-//		#elif defined(LCD_USE_I2C_BUZZER)
-//		  lcd_buzz(beepP, beepS);
-//        #endif
-//      }
-//      else
-//      {
-//        delay(beepP);
-//      }
-
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
-        _delay_ms(50);
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
->>>>>>> dev
     }
     break;
     #endif // M300
@@ -3540,10 +3413,6 @@ void process_commands()
           {
           #if BEEPER > 0
             SET_OUTPUT(BEEPER);
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
             WRITE(BEEPER,HIGH);
             delay(3);
             WRITE(BEEPER,LOW);
@@ -3933,27 +3802,11 @@ void process_commands()
 
     case 728:// M728 - RASPI ALIVE
     {
-<<<<<<< HEAD
       //Stopped = false;
-=======
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      
->>>>>>> dev
       set_amb_color(255,255,255);
       store_last_amb_color();
       stop_fading();
       restore_last_amb_color();
-<<<<<<< HEAD
     
       if (!silent){      
         
@@ -3985,10 +3838,6 @@ void process_commands()
       }
       
 
-=======
-         
-      
->>>>>>> dev
     }
     break;
     
@@ -4007,7 +3856,6 @@ void process_commands()
       disable_e1();
       disable_e2();
       
-<<<<<<< HEAD
       //outro tune
       if (!silent){
         analogWrite(BEEPER, 115);
@@ -4034,8 +3882,6 @@ void process_commands()
         BEEP_OFF();
         delay(100);
       }
-=======
->>>>>>> dev
       
       set_amb_color(0,0,0);
       store_last_amb_color();
@@ -4043,21 +3889,12 @@ void process_commands()
       //_delay_ms(45000);
       //restore_last_amb_color();
        //while(1){}
-<<<<<<< HEAD
-=======
-      
->>>>>>> dev
     }
     break;
     
     case 730:   // M730 - READ LAST ERROR CODE
     {
-<<<<<<< HEAD
       RPI_ERROR_ACK_OFF();
-=======
-      
-      //RPI_ERROR_ACK_OFF();
->>>>>>> dev
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
@@ -4104,7 +3941,6 @@ void process_commands()
       triggered_kill=false;
       Stopped = false;
     }
-<<<<<<< HEAD
     break;              
     
     case 734: // monitor warning settings (endstops)
@@ -4148,8 +3984,6 @@ void process_commands()
         }
       }
     }
-=======
->>>>>>> dev
     break;
     
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
@@ -4159,7 +3993,6 @@ void process_commands()
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
         enable_endstops(false);
-<<<<<<< HEAD
                
         
         if(!MILL_MOTOR_STATUS())
@@ -4176,11 +4009,6 @@ void process_commands()
           lcd_update();
         }
               
-=======
-        
-        if(!MILL_MOTOR_STATUS())
-            {
->>>>>>> dev
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
               {
 	      servos[servo_index].attach(0);
@@ -4231,7 +4059,6 @@ void process_commands()
       
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
-<<<<<<< HEAD
         
         
         //wait
@@ -4246,8 +4073,6 @@ void process_commands()
         }
 
 
-=======
->>>>>>> dev
         inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
@@ -4306,7 +4131,6 @@ void process_commands()
       
    case 5: // M5 SPINDLE OFF
       {
-<<<<<<< HEAD
         //wait
         codenum=1500;       
         st_synchronize();
@@ -4318,8 +4142,6 @@ void process_commands()
           lcd_update();
         }
         
-=======
->>>>>>> dev
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
@@ -4627,7 +4449,6 @@ void process_commands()
 
     case 756 :  // M756 - ERROR GENERATOR
       {
-<<<<<<< HEAD
        
       ERROR_CODE=0;
       int value;
@@ -4638,11 +4459,6 @@ void process_commands()
       }
       
       RPI_ERROR_ACK_ON();    
-=======
-      RPI_ERROR_ACK_ON();
-      ERROR_CODE=9999999;  
-     
->>>>>>> dev
 
       }
       break;
@@ -4707,7 +4523,6 @@ void process_commands()
     case 779 :  // M779 - force head ID reading after reset /for testing purpose only
       {
          Read_Head_Info();
-<<<<<<< HEAD
       
         if (!silent){
           _delay_ms(50);
@@ -4717,15 +4532,6 @@ void process_commands()
           _delay_ms(50);
           BEEP_OFF()
           }
-=======
-
-        _delay_ms(50);
-        BEEP_OFF()
-        _delay_ms(30);
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
->>>>>>> dev
       }
       break;
      
@@ -4784,7 +4590,6 @@ void process_commands()
       }
     }
     break;
-<<<<<<< HEAD
     
     
     /*
@@ -4867,34 +4672,6 @@ void process_commands()
     }
     break;
       
-=======
-        
-    case 786: // M786 - external power on/off pin control
-      {
-          //poweroff_rqs();
-      }
-      break;
-
-    case 787: // M787 - external power on/off pin control
-      {
-              SERIAL_PROTOCOL(READ(PWR_IN_PIN)); 
-      }
-      break;
-      
-     case 788: // M788 stepper test
-      {
-              int c;
-              for(c=0; c<50; c++){
-                digitalWrite(20, 0);
-                delay(200); 
-                digitalWrite(20, 1);
-                delay(200); 
-              }
-                        
-      }
-      break;
-
->>>>>>> dev
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
@@ -4904,11 +4681,8 @@ void process_commands()
       }
       break;
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> dev
     
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
@@ -5220,11 +4994,7 @@ void get_arc_coordinates()
 
 void clamp_to_software_endstops(float target[3])
 {
-<<<<<<< HEAD
    if (min_software_endstops) {
-=======
-  if (min_software_endstops) {
->>>>>>> dev
     if (target[X_AXIS] < min_pos[X_AXIS]) target[X_AXIS] = min_pos[X_AXIS];
     if (target[Y_AXIS] < min_pos[Y_AXIS]) target[Y_AXIS] = min_pos[Y_AXIS];
     if (target[Z_AXIS] < min_pos[Z_AXIS]) target[Z_AXIS] = min_pos[Z_AXIS];
@@ -5558,11 +5328,7 @@ void manage_inactivity()
 
  if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
-<<<<<<< HEAD
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled   
-=======
-     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
->>>>>>> dev
     }
 
  //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
@@ -5572,7 +5338,6 @@ void manage_inactivity()
  //   stop_fading();
  //   set_amb_color(0,0,255);
  //    }
-<<<<<<< HEAD
  //else
  //   {
  //      if(rpi_recovery_flag)
@@ -5581,16 +5346,6 @@ void manage_inactivity()
  //      rpi_recovery_flag=false;
  //      }
  //    }
-=======
- else
-     {
-       if(rpi_recovery_flag)
-       {
-       RPI_RECOVERY_OFF();
-       rpi_recovery_flag=false;
-       }
-     }
->>>>>>> dev
 
  if ((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && (READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
     { // the user pressed both Y-Endstops at the same time (or a hardware switch that enables them at the same time)
@@ -5617,7 +5372,6 @@ void manage_inactivity()
 
 }
 
-<<<<<<< HEAD
 
 void manage_secure_endstop()
 {
@@ -5670,42 +5424,6 @@ void manage_secure_endstop()
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
     }
-=======
-void manage_secure_endstop()
-{
-  
-  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    zeroed_far_from_home_y=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
-  }
-  
-  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
-  {
-    zeroed_far_from_home_x=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MAX_ENDSTOP;
-  }
-
-//  if(READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)
-//  {kill();}
-  
-  if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING) && zeroed_far_from_home_x && !READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MIN_ENDSTOP;
-    //kill();
-  }
-
-  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))      
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
-    //kill();
->>>>>>> dev
   }
  
  
@@ -5837,15 +5555,12 @@ void Read_Head_Info()
     {
        head_placed=true;
     }  
-<<<<<<< HEAD
     
     /* installed_head_id!=0{
     head_placed=true;
     }else{
     head_placed=false;
     }*/
-=======
->>>>>>> dev
 
 }  
 
@@ -5880,12 +5595,8 @@ char I2C_read(byte i2c_register)
 }
 
 void kill_by_door()
-<<<<<<< HEAD
 { 
 
-=======
-{
->>>>>>> dev
   store_last_amb_color();
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
@@ -5917,7 +5628,6 @@ void kill_by_door()
   
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_DOOR_OPEN;
-<<<<<<< HEAD
   
   /*
   if (!silent){
@@ -5934,8 +5644,6 @@ void kill_by_door()
   BEEP_OFF();
   }
   */
-=======
->>>>>>> dev
 }
 
 void kill()
@@ -5964,10 +5672,7 @@ void kill()
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
 #endif
-<<<<<<< HEAD
 
-=======
->>>>>>> dev
   SERIAL_ERROR_START;
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
@@ -5976,13 +5681,6 @@ void kill()
   
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
-<<<<<<< HEAD
-=======
-  if(READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MAX_ENDSTOP;}
-  if(READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MIN_ENDSTOP;}
-  if(READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MIN_ENDSTOP;}
-  if(READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MAX_ENDSTOP;}
->>>>>>> dev
   
 }
 
