@@ -12,14 +12,14 @@ Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
 Compiling
 ---------
 
-### with Arduino IDE
-
 Now FABlin requires the custom _SmartComm_ module, stored inside 
-libraries. To correctly compile the firmware with Arduino you must set 
-the folder where this repository is checked out as Arduino's sketchbook 
-folder inside Arduino's preferences. Alternatively you can manually 
-copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into 
-your current sketchbook's libraries folder.
+the _libraries_ direcctory.
+
+### with Arduino IDE To correctly compile the firmware with Arduino you 
+must set the folder where this repository is checked out as Arduino's 
+sketchbook folder inside Arduino's preferences. Alternatively you can 
+manually copy the [FABlin/libraries/SmartComm](libraries/SmartComm) 
+folder into your current sketchbook's libraries folder.
 
 For further info refer to 
 https://www.arduino.cc/en/Guide/Environment#toc7.
@@ -27,16 +27,16 @@ https://www.arduino.cc/en/Guide/Environment#toc7.
 
 ### with PlatformIO
 
-A default `platformio.ini` file with correct directories definitions is 
+A default _platformio.ini_ file with correct directories definitions is 
 now included in the repository. To compile the firmware simply run:
 
-  platformio run
+    platformio run
 
 To directly flash the firmware onto TOTUMduino, run:
 
-  platformio run -t program
+    platformio run -t program
 
-`platformio.ini` has a default definition for using an AVRISP-mk2 usb 
+platformio.ini has a default definition for using an AVRISP-mk2 usb 
 programmer. To flash or upload the firmware through other means refer 
 to [platformio 
 documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
@@ -67,7 +67,7 @@ Changelog
 * Fixed G28 inability to probe the center of the work-area when z_max_endstop is triggered
 * Sounds alerts revamp to be more clear, silent mode can be triggered on some commands that usually emit sound.
 *  M735 S1-0 enable /disable silent mode (less beeps all around)
-* If door safety is enabled, opening the door will trigger an instant emergency stop of all movement and routines, reverting the unit to a safe situation. Door safety can still be enabled or disabled from the FABUI’s settings>hardware menu.
+* If door safety is enabled, opening the door will trigger an instant emergency stop of all movement and routines, reverting the unit to a safe situation. Door safety can still be enabled or disabled from the FABUIâ€™s settings>hardware menu.
 * Inactivity timer changed to 10 minutes for longer heating times.
 * Fan management for V1 and V2 heads (SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE behaviour modified: V2 heads won't have mandatory auto-cooling unless wanted, while V1 will have auto-cooling unless configured as disabled.) This reduces the heating time with V2 heads while avoiding clogging due to prolonged overheating in V1 heads.
 * Added optional external power supply shutdown procedure (M786).
